@@ -64,8 +64,8 @@ func GetIfaceAddr(iface *net.Interface) (net.IP, error) {
 	var srcIP net.IP
 	for _, address := range addrs {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				srcIP = ipnet.IP.To4()
+			if ipnet.IP.To16() != nil {
+				srcIP = ipnet.IP.To16()
 				break
 			}
 		}

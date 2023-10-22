@@ -530,7 +530,7 @@ func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBack
 
 	//figure out MAC address
 	//test if it's in LAN first
-	dstMac, err := GetGatewayAddr(iface, handle, backendResolvers[0].resolverBackendIP.To4())
+	dstMac, err := GetGatewayAddr(iface, handle, backendResolvers[0].resolverBackendIP.To16())
 	if err == nil {
 		ethernetLayer = &layers.Ethernet{
 			SrcMAC: iface.HardwareAddr,
