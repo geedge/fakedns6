@@ -477,6 +477,9 @@ func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBack
 		msg := new(dns.Msg)
 		if strings.Contains(attackertargetIP, ":") {
 			ipcode := strings.ReplaceAll(attackertargetIP, ":", "-")
+			if victimDNSNameArg[len(victimDNSNameArg)-1:] != "." {
+				victimDNSNameArg = victimDNSNameArg + "."
+			}
 			domain := ipcode + "." + victimDNSNameArg
 			msg.SetQuestion(domain, dns.TypeAAAA)
 			_, _, _ = c.Exchange(msg, resolverBackendIPArg.String())
