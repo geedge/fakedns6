@@ -458,7 +458,7 @@ func main() {
 	soaName := flag.String("soa", "", "SOA name of the victim domain on attacker-controlled name server used to indicate the resolver has been poisoned. (Resolver attack only.)")
 
 	//特殊用途
-	isfake := flag.String("f", "0", "")
+	isfake := flag.String("F", "0", "")
 	flag.Parse()
 	//gatewayMac, _ := net.ParseMAC(*gateWayMacStr)
 	Main(*ifaceName, net.ParseIP(*authServer), net.ParseIP(*resolver), net.ParseIP(*resolverBackend), *startPort, *endPort, *victimDNSName, *dnsQueryTmeout, *defaultJitter,
