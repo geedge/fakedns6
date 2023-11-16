@@ -8,7 +8,7 @@ dig @$1 $4 AAAA
 
 
 success=0
-while $success!=1
+while $success -ne 1
 do
   success=0
   echo '10秒之后开始攻击...'
